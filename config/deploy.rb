@@ -98,3 +98,38 @@ namespace :deploy do
   end
   after :published, :opcache
 end
+
+#check if branch exists
+before "deploy:started", :git_repo_check do
+  %w{ git:check:repo }.each do |task|
+    invoke "#{task}"
+  end
+end
+
+namespace :git do
+  namespace :check do
+    desc "Checks source repo for deploy branch."
+    task :repo do
+      on roles(:all) do |host|
+        Rake::Task["git:check"].invoke()
+
+        repo_path = "#{fetch(:deploy_to)}/repo"
+
+        if test "[ -f #{repo_path}/HEAD ]"
+          within repo_path do
+            execute :git, 'remote', 'set-url', 'origin', fetch(:repo_url)
+          end
+          if test "git --git-dir=#{repo_path} fetch origin #{fetch(:branch)}"
+            info "Remote repo has branch #{fetch(:branch)}"
+          else
+            error_msg = "There is no remote branch #{fetch(:branch)} available!"
+            error error_msg
+            throw 'Error: ' + error_msg
+          end
+        else
+            info "Remote repo not created yet"
+        end
+      end
+    end
+  end
+end
