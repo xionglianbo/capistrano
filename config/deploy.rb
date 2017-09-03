@@ -69,6 +69,20 @@ if ENV['project'] == 'ec-admin'
 end
 
 namespace :deploy do
+  desc "Display human readable information"
+  task :display_information do
+    on roles(:all) do |host|
+      info "Application: #{fetch(:application)}"
+      if ENV['project']
+        info "Project: " + ENV['project']
+      end
+      info "Fetch code from: #{fetch(:repo_url)}"
+      info "Use the Branch: #{fetch(:branch)}"
+      info "And deploy to: #{host} #{fetch(:deploy_to)}/#{fetch(:current_dir)}"
+    end
+  end
+  before :starting, :display_information
+
   # For Laravel applications
   laravel_5_projects = [
     'ec-admin'
@@ -97,6 +111,26 @@ namespace :deploy do
     end
   end
   after :published, :opcache
+
+  # Clear broken symlinks
+  desc "clear broken symlinks"
+  task :clear_broken_symlink do
+    on roles(:web) do |host|
+      execute "find #{fetch(:deploy_to)} -maxdepth 1 -type l -exec test ! -e {} \\; -delete"
+    end
+  end
+  after :finishing, :clear_broken_symlink
+
+  # refine symlink
+  namespace :symlink do
+    Rake::Task["release"].clear_actions
+    task :release do
+      on release_roles :all do
+        execute :rm, '-rf', deploy_path + "#{fetch(:current_dir)}"
+        execute :ln, '-s', release_path, deploy_path + "#{fetch(:current_dir)}"
+      end
+    end
+  end
 end
 
 #check if branch exists
