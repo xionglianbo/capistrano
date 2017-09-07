@@ -64,7 +64,13 @@ if ENV['project']
     set :application, "xiong_project_#{ENV['server']}_#{ENV['project']}_#{ENV['branch']}"
 end
 
-if ENV['project'] == 'ec-admin'
+# For Laravel applications
+laravel_5_projects = [
+'ec-api',
+'ec-admin'
+]
+
+if laravel_5_projects.include? ENV['project']
   set :linked_files, %w{.env}
 end
 
@@ -83,10 +89,6 @@ namespace :deploy do
   end
   before :starting, :display_information
 
-  # For Laravel applications
-  laravel_5_projects = [
-    'ec-admin'
-  ]
   desc "laravel"
   task :laravel do
     if laravel_5_projects.include? ENV['project']
