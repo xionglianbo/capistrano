@@ -60,8 +60,9 @@ if ENV['project']
     else
         set :repo_url, "https://github.com/#{fetch(:remote)}/#{ENV['project']}.git"
     end
+
     set :deploy_to, "/var/www/#{ENV['server']}/#{ENV['project']}"
-    set :application, "xiong_project_#{ENV['server']}_#{ENV['project']}_#{ENV['branch']}"
+    set :application, "#{ENV['project']}_#{fetch(:remote)}"
 end
 
 # For Laravel applications
